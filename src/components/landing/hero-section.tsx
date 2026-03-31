@@ -147,122 +147,72 @@ function DashboardMockup() {
   );
 }
 
-// --- Dashboard Scroll Expand (locks scroll during animation) ---
+// --- Dashboard Scroll Expand ---
+// Desktop: wheel-driven expand with scroll lock
+// Mobile: just show fully expanded (no scroll capture)
 function DashboardScrollExpand() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const locked = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Detect mobile
   useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Lock when dashboard section is in view and animation not complete
-        if (entry.isIntersecting && progress < 1) {
-          locked.current = true;
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, [progress]);
-
+  // On mobile, just set progress to 1 (fully expanded)
   useEffect(() => {
+    if (isMobile) setProgress(1);
+  }, [isMobile]);
+
+  // Desktop only: wheel-driven expand
+  useEffect(() => {
+    if (isMobile) return;
+
     const handleWheel = (e: WheelEvent) => {
       const section = sectionRef.current;
       if (!section) return;
 
       const rect = section.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
+      // Section must be in view
+      if (rect.top > window.innerHeight * 0.6 || rect.bottom < 0) return;
 
-      if (!inView) {
-        locked.current = false;
-        return;
-      }
-
-      // Scrolling up — always free, reset progress so they redo it next time
+      // Scrolling up — free, reset
       if (e.deltaY < 0) {
         if (progress > 0) setProgress(0);
-        locked.current = false;
         return;
       }
 
-      // Scrolling down and not fully expanded — lock and expand
+      // Scrolling down, not fully expanded — lock and expand slowly
       if (e.deltaY > 0 && progress < 1) {
         e.preventDefault();
-        locked.current = true;
-        setProgress((p) => Math.min(p + e.deltaY / 600, 1));
+        e.stopPropagation();
+        setProgress((p) => Math.min(p + e.deltaY / 800, 1));
         return;
       }
 
-      // Fully expanded and scrolling down — let page scroll
-      locked.current = false;
+      // Fully expanded — let page scroll
     };
 
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, [progress]);
-
-  // Touch support
-  useEffect(() => {
-    let touchStartY = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const section = sectionRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
-      if (!inView) return;
-
-      const deltaY = touchStartY - e.touches[0].clientY;
-      touchStartY = e.touches[0].clientY;
-
-      // Swiping up — always free, reset
-      if (deltaY < 0) {
-        if (progress > 0) setProgress(0);
-        return;
-      }
-
-      // Swiping down — lock and expand
-      if (deltaY > 0 && progress < 1) {
-        e.preventDefault();
-        setProgress((p) => Math.min(p + deltaY / 400, 1));
-      }
-    };
-
-    window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [progress]);
+    window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    return () => window.removeEventListener("wheel", handleWheel, { capture: true });
+  }, [progress, isMobile]);
 
   // Derived values
-  const scale = 0.65 + progress * 0.35; // 0.65 → 1
-  const rotateX = 14 - progress * 14; // 14 → 0
-  const opacity = 0.4 + progress * 0.6; // 0.4 → 1
-  const translateY = 60 - progress * 60; // 60 → 0
-  const radius = 12 - progress * 10; // 12 → 2
+  const scale = 0.6 + progress * 0.4;
+  const rotateX = 16 - progress * 16;
+  const opacity = 0.3 + progress * 0.7;
+  const translateY = 80 - progress * 80;
+  const radius = 14 - progress * 12;
 
   return (
     <div ref={sectionRef} className="mx-auto mt-16 max-w-5xl px-6" style={{ perspective: 1200 }}>
       <motion.div
-        animate={{
-          scale,
-          rotateX,
-          opacity,
-          y: translateY,
-          borderRadius: radius,
-        }}
-        transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
+        animate={{ scale, rotateX, opacity, y: translateY, borderRadius: radius }}
+        transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
         style={{ transformOrigin: "center bottom" }}
       >
         <div className="relative overflow-hidden">
@@ -270,13 +220,12 @@ function DashboardScrollExpand() {
           <DashboardMockup />
         </div>
       </motion.div>
-      {/* Progress hint */}
-      {progress > 0 && progress < 1 && (
+      {!isMobile && progress > 0.01 && progress < 0.99 && (
         <div className="mt-4 flex justify-center">
           <div className="h-1 w-24 rounded-full bg-[#F5F5F5] dark:bg-[#1C1C1C] overflow-hidden">
             <div
-              className="h-full bg-[#141414] dark:bg-[#F5F5F5] rounded-full transition-all duration-100"
-              style={{ width: `${progress * 100}%` }}
+              className="h-full bg-[#141414] dark:bg-[#F5F5F5] rounded-full"
+              style={{ width: `${progress * 100}%`, transition: "width 0.1s linear" }}
             />
           </div>
         </div>

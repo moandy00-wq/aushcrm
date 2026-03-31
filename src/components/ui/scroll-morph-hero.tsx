@@ -302,7 +302,7 @@ export default function ScrollMorphHero() {
     >
       <div className="flex h-full w-full flex-col items-center justify-center">
         {/* Center text — fades as morph begins */}
-        <div className="absolute z-0 flex flex-col items-center justify-center text-center pointer-events-none top-1/2 -translate-y-1/2">
+        <div className="absolute z-30 flex flex-col items-center justify-center text-center pointer-events-none top-1/2 -translate-y-1/2 px-6">
           <motion.h1
             initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
             animate={
