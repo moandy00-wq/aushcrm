@@ -147,140 +147,74 @@ function DashboardMockup() {
   );
 }
 
-// --- Dashboard Scroll Expand (locks scroll during animation) ---
+// --- Dashboard Scroll Expand (sticky scroll-driven, no wheel interception) ---
 function DashboardScrollExpand() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const locked = useRef(false);
 
   useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+    const onScroll = () => {
+      const outer = outerRef.current;
+      if (!outer) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Lock when dashboard section is in view and animation not complete
-        if (entry.isIntersecting && progress < 1) {
-          locked.current = true;
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, [progress]);
+      const rect = outer.getBoundingClientRect();
+      const scrolledInto = -rect.top;
+      const scrollRange = outer.offsetHeight - window.innerHeight;
 
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const section = sectionRef.current;
-      if (!section) return;
-
-      const rect = section.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
-
-      if (!inView) {
-        locked.current = false;
+      if (scrolledInto <= 0 || scrollRange <= 0) {
+        setProgress(0);
         return;
       }
 
-      // Scrolling up — always free, reset progress so they redo it next time
-      if (e.deltaY < 0) {
-        if (progress > 0) setProgress(0);
-        locked.current = false;
-        return;
-      }
-
-      // Scrolling down and not fully expanded — lock and expand
-      if (e.deltaY > 0 && progress < 1) {
-        e.preventDefault();
-        locked.current = true;
-        setProgress((p) => Math.min(p + e.deltaY / 600, 1));
-        return;
-      }
-
-      // Fully expanded and scrolling down — let page scroll
-      locked.current = false;
+      setProgress(Math.min(scrolledInto / scrollRange, 1));
     };
 
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, [progress]);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  // Touch support
-  useEffect(() => {
-    let touchStartY = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const section = sectionRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
-      if (!inView) return;
-
-      const deltaY = touchStartY - e.touches[0].clientY;
-      touchStartY = e.touches[0].clientY;
-
-      // Swiping up — always free, reset
-      if (deltaY < 0) {
-        if (progress > 0) setProgress(0);
-        return;
-      }
-
-      // Swiping down — lock and expand
-      if (deltaY > 0 && progress < 1) {
-        e.preventDefault();
-        setProgress((p) => Math.min(p + deltaY / 400, 1));
-      }
-    };
-
-    window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [progress]);
-
-  // Derived values
-  const scale = 0.65 + progress * 0.35; // 0.65 → 1
-  const rotateX = 14 - progress * 14; // 14 → 0
-  const opacity = 0.4 + progress * 0.6; // 0.4 → 1
-  const translateY = 60 - progress * 60; // 60 → 0
-  const radius = 12 - progress * 10; // 12 → 2
+  // Derived values — slow expansion feel
+  const scale = 0.6 + progress * 0.4;       // 0.6 -> 1
+  const rotateX = 16 - progress * 16;        // 16deg -> 0deg
+  const opacity = 0.3 + progress * 0.7;      // 0.3 -> 1
+  const translateY = 80 - progress * 80;      // 80px -> 0px
+  const radius = 14 - progress * 12;          // 14px -> 2px
 
   return (
-    <div ref={sectionRef} className="mx-auto mt-16 max-w-5xl px-6" style={{ perspective: 1200 }}>
-      <motion.div
-        animate={{
-          scale,
-          rotateX,
-          opacity,
-          y: translateY,
-          borderRadius: radius,
-        }}
-        transition={{ type: "tween", duration: 0.15, ease: "easeOut" }}
-        style={{ transformOrigin: "center bottom" }}
-      >
-        <div className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--background)] to-transparent z-10" />
-          <DashboardMockup />
+    // 250vh tall — user scrolls 1.5 viewport heights to fully expand the dashboard
+    <div ref={outerRef} className="mt-16" style={{ height: "250vh" }}>
+      <div className="sticky top-0 flex items-center justify-center" style={{ height: "100vh", perspective: 1200 }}>
+        <div className="mx-auto max-w-5xl w-full px-6">
+          <motion.div
+            style={{
+              scale,
+              rotateX,
+              opacity,
+              y: translateY,
+              borderRadius: radius,
+              transformOrigin: "center bottom",
+            }}
+          >
+            <div className="relative overflow-hidden">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--background)] to-transparent z-10" />
+              <DashboardMockup />
+            </div>
+          </motion.div>
+
+          {/* Progress bar */}
+          {progress > 0.01 && progress < 0.99 && (
+            <div className="mt-6 flex justify-center">
+              <div className="h-1 w-32 rounded-full bg-[#F5F5F5] dark:bg-[#1C1C1C] overflow-hidden">
+                <div
+                  className="h-full bg-[#141414] dark:bg-[#F5F5F5] rounded-full"
+                  style={{ width: `${progress * 100}%`, transition: "width 0.05s linear" }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      </motion.div>
-      {/* Progress hint */}
-      {progress > 0 && progress < 1 && (
-        <div className="mt-4 flex justify-center">
-          <div className="h-1 w-24 rounded-full bg-[#F5F5F5] dark:bg-[#1C1C1C] overflow-hidden">
-            <div
-              className="h-full bg-[#141414] dark:bg-[#F5F5F5] rounded-full transition-all duration-100"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
