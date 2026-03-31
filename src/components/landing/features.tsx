@@ -104,9 +104,9 @@ export function Features() {
 
             {/* 2-column layout */}
             <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
-              {/* Left — Bucket */}
-              <div className="flex items-center justify-center">
-                <div className="w-full max-w-md rounded-sm border border-black/[0.04] bg-[#F5F5F5] p-8 dark:border-white/[0.04] dark:bg-[#141414]">
+              {/* Left — Bucket (hidden on mobile to prevent overflow) */}
+              <div className="hidden lg:flex items-center justify-center">
+                <div className="w-full max-w-sm rounded-sm border border-black/[0.04] bg-[#F5F5F5] p-6 dark:border-white/[0.04] dark:bg-[#141414] overflow-hidden">
                   <FeatureBucket activeIndex={activeIndex} />
                 </div>
               </div>

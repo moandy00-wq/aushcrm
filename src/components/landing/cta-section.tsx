@@ -23,13 +23,13 @@ export function CtaSection() {
 
       <div className="mx-auto max-w-6xl px-6 py-20">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          {/* Left — 3D Box Animation */}
+          {/* Left — 3D Box Animation (hidden on mobile) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
-            className="flex items-center justify-center overflow-hidden"
+            className="hidden lg:flex items-center justify-center overflow-hidden"
           >
             <div className="relative flex items-center justify-center" style={{ width: 280, height: 350 }}>
               <div style={{ transform: "scale(0.85)" }}>
@@ -44,7 +44,7 @@ export function CtaSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="flex flex-col items-start lg:items-start"
+            className="flex flex-col items-center text-center lg:items-start lg:text-left"
           >
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#A0A0A0]">
               Start building today
