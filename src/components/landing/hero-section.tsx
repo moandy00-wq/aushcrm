@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
+import { ScrambleText } from "@/components/ui/scramble-text";
 
 // --- Integration logos for the belts ---
 const ROW_1 = [
@@ -264,10 +265,9 @@ export function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Heading */}
-        <motion.h1
-          variants={item}
-          className="text-[#141414] dark:text-[#F5F5F5]"
+        {/* Heading — word-by-word blur reveal */}
+        <h1
+          className="text-[#141414] dark:text-[#F5F5F5] text-center"
           style={{
             fontSize: "clamp(36px, 5.5vw, 72px)",
             fontWeight: 600,
@@ -275,15 +275,40 @@ export function HeroSection() {
             letterSpacing: "-0.5px",
           }}
         >
-          The CRM your team
+          {"The CRM your team".split(" ").map((word, i) => (
+            <motion.span
+              key={`l1-${i}`}
+              initial={{ opacity: 0, filter: "blur(8px)", y: 12 }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 + i * 0.12, ease: "easeOut" }}
+              className="mr-[0.25em] inline-block"
+            >
+              {word}
+            </motion.span>
+          ))}
           <br />
-          actually wants to use.
-        </motion.h1>
+          {"actually wants to use.".split(" ").map((word, i) => (
+            <motion.span
+              key={`l2-${i}`}
+              initial={{ opacity: 0, filter: "blur(8px)", y: 12 }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              transition={{ duration: 0.4, delay: 0.8 + i * 0.12, ease: "easeOut" }}
+              className="mr-[0.25em] inline-block"
+            >
+              {word}
+            </motion.span>
+          ))}
+        </h1>
 
-        {/* Subtitle */}
-        <motion.p variants={item} className="mt-5 max-w-xl text-base text-[#707070] leading-relaxed md:text-lg">
-          Role-based access, real-time search, and analytics — built for teams that move fast.
-        </motion.p>
+        {/* Subtitle — scramble decode effect */}
+        <div className="mt-5 max-w-xl text-center">
+          <ScrambleText
+            text="Role-based access, real-time search, and analytics — built for teams that move fast."
+            className="text-base text-[#707070] leading-relaxed md:text-lg"
+            speed={0.7}
+            delay={1400}
+          />
+        </div>
 
         {/* CTAs */}
         <motion.div variants={item} className="mt-8 flex flex-wrap items-center justify-center gap-3">
