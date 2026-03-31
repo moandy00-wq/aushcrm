@@ -143,7 +143,7 @@ const BoxLoader = () => {
     @keyframes bl-mask { 0%, 65% { opacity: 0; } 66%, 100% { opacity: 1; } }
   `;
 
-  const boxes = [...Array(8).keys()];
+  const boxes = Array.from({ length: 8 }, (_, i) => i);
 
   return (
     <>
