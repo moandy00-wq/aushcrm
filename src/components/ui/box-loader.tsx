@@ -2,14 +2,19 @@
 
 import React from 'react';
 
-const BoxLoader = () => {
+interface BoxLoaderProps {
+  maskColor?: string;
+}
+
+const BoxLoader = ({ maskColor }: BoxLoaderProps) => {
+  const mask = maskColor || "var(--background, #ffffff)";
   const loaderCss = `
     .box-loader {
       --duration: 3s;
       --primary: #141414;
       --primary-light: #333333;
       --primary-rgba: rgba(20, 20, 20, 0);
-      --mask-bg: var(--background, #ffffff);
+      --mask-bg: ${mask};
       width: 200px;
       height: 320px;
       position: relative;

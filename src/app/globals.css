@@ -31,6 +31,9 @@ body {
   background: var(--background);
 }
 
+[data-cta] { --cta-bg: #F5F5F5; }
+.dark [data-cta] { --cta-bg: #141414; }
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
