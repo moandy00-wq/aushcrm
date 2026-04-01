@@ -3,13 +3,19 @@
 import Image from 'next/image';
 import { Menu } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
+import { NotificationBell } from './notification-bell';
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import type { Notification } from '@/types';
 
 export function TopBar({
   onMenuClick,
+  notificationCount = 0,
+  notifications = [],
 }: {
   onMenuClick: () => void;
+  notificationCount?: number;
+  notifications?: Notification[];
 }) {
   const user = useUser();
 
@@ -33,8 +39,13 @@ export function TopBar({
       {/* Spacer for desktop */}
       <div className="hidden lg:block" />
 
-      {/* Right: user info */}
+      {/* Right: notifications + user info */}
       <div className="flex items-center gap-3">
+        <NotificationBell
+          initialCount={notificationCount}
+          initialNotifications={notifications}
+        />
+
         <span
           className={cn(
             'inline-flex items-center px-2 py-0.5 text-xs font-medium',

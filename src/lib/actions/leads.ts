@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { updateLeadStatusSchema, assignLeadSchema } from '@/types/schemas';
+import { updateLeadStatusSchema, assignLeadSchema, moveLeadInPipelineSchema } from '@/types/schemas';
+import { createNotification } from '@/lib/notifications/create';
 import type { ActionResult } from '@/types';
 
 export async function updateLeadStatus(
@@ -20,6 +21,13 @@ export async function updateLeadStatus(
       return { success: false, error: 'Not authenticated' };
     }
 
+    // Get lead to check assigned_to
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('id, name, assigned_to')
+      .eq('id', parsed.data.lead_id)
+      .single();
+
     const { error } = await supabase
       .from('leads')
       .update({
@@ -32,7 +40,19 @@ export async function updateLeadStatus(
       return { success: false, error: error.message };
     }
 
+    // Notify assigned team member if any
+    if (lead?.assigned_to && lead.assigned_to !== userData.user.id) {
+      await createNotification(
+        lead.assigned_to,
+        'lead_status_changed',
+        'Lead status changed',
+        `"${lead.name}" moved to ${parsed.data.status}`,
+        `/leads/${parsed.data.lead_id}`
+      );
+    }
+
     revalidatePath('/leads');
+    revalidatePath('/pipeline');
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to update lead status' };
@@ -54,6 +74,13 @@ export async function assignLead(
       return { success: false, error: 'Not authenticated' };
     }
 
+    // Get lead name for notification
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('id, name')
+      .eq('id', parsed.data.lead_id)
+      .single();
+
     const { error } = await supabase
       .from('leads')
       .update({ assigned_to: parsed.data.assigned_to })
@@ -61,6 +88,17 @@ export async function assignLead(
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Notify assigned user
+    if (parsed.data.assigned_to && parsed.data.assigned_to !== userData.user.id) {
+      await createNotification(
+        parsed.data.assigned_to,
+        'lead_assigned',
+        'Lead assigned to you',
+        `You have been assigned "${lead?.name ?? 'a lead'}"`,
+        `/leads/${parsed.data.lead_id}`
+      );
     }
 
     revalidatePath('/leads');
@@ -97,5 +135,41 @@ export async function softDeleteLead(
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to delete lead' };
+  }
+}
+
+export async function moveLeadInPipeline(
+  data: unknown
+): Promise<ActionResult> {
+  try {
+    const parsed = moveLeadInPipelineSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0].message };
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const { data: userData, error: authError } = await supabase.auth.getUser();
+    if (authError || !userData.user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        status: parsed.data.status,
+        position: parsed.data.position,
+        stage_entered_at: new Date().toISOString(),
+      })
+      .eq('id', parsed.data.lead_id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/pipeline');
+    revalidatePath('/leads');
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to move lead in pipeline' };
   }
 }

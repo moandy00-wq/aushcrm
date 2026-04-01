@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLead, getLeadNotes } from '@/lib/queries/leads';
+import { getLead, getLeadNotes, getLeadEmails } from '@/lib/queries/leads';
 import { getLeadActivity } from '@/lib/queries/activity';
 import { getTeamMembers } from '@/lib/queries/team';
 import { LeadDetailHeader } from '@/components/dashboard/lead-detail-header';
@@ -16,11 +16,12 @@ interface LeadDetailPageProps {
 export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
   const { id } = await params;
 
-  const [lead, notesResult, activityResult, teamMembers] = await Promise.all([
+  const [lead, notesResult, activityResult, teamMembers, emails] = await Promise.all([
     getLead(id),
     getLeadNotes(id),
     getLeadActivity(id),
     getTeamMembers(),
+    getLeadEmails(id),
   ]);
 
   if (!lead) {
@@ -43,6 +44,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
         lead={lead}
         initialNotes={notesResult.data}
         activityEntries={activityResult.data}
+        initialEmails={emails}
       />
     </div>
   );

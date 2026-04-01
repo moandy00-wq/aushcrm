@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import type { Lead, LeadNote, PaginatedResult, PaginationParams, LeadStatus } from '@/types';
+import type { Lead, LeadEmail, LeadNote, PaginatedResult, PaginationParams, LeadStatus } from '@/types';
 
 export interface LeadFilters {
   status?: LeadStatus;
@@ -104,4 +104,22 @@ export async function getLeadNotes(
     limit,
     totalPages: Math.ceil(total / limit),
   };
+}
+
+export async function getLeadEmails(leadId: string): Promise<LeadEmail[]> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('lead_emails')
+    .select(
+      '*, sender:profiles!sender_id(id, full_name, avatar_url, email, created_at, updated_at)'
+    )
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as unknown as LeadEmail[];
 }

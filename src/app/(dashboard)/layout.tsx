@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { UserProvider } from '@/hooks/use-user';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
+import { getUnreadCount, getRecentNotifications } from '@/lib/queries/notifications';
 import type { AuthUser, AppRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -46,10 +47,21 @@ export default async function DashboardLayout({
     role: userRole.role as AppRole,
   };
 
+  // Fetch notifications
+  const [notificationCount, notifications] = await Promise.all([
+    getUnreadCount(profile.id),
+    getRecentNotifications(profile.id),
+  ]);
+
   return (
     <div className="light" style={{ colorScheme: 'light' }}>
       <UserProvider user={authUser}>
-        <DashboardShell>{children}</DashboardShell>
+        <DashboardShell
+          notificationCount={notificationCount}
+          notifications={notifications}
+        >
+          {children}
+        </DashboardShell>
       </UserProvider>
     </div>
   );

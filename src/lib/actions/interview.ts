@@ -8,6 +8,7 @@ import { LeadConfirmationEmail } from '@/lib/email/templates/lead-confirmation';
 import { NewLeadNotificationEmail } from '@/lib/email/templates/new-lead-notification';
 import { interviewGateSchema, fallbackFormSchema } from '@/types/schemas';
 import { extractInterviewData } from '@/lib/interview/extract';
+import { notifyAdmins } from '@/lib/notifications/create';
 import type { ActionResult, ChatMessage, InterviewSession } from '@/types';
 import type { Json } from '@/types/database';
 import { createElement } from 'react';
@@ -155,6 +156,14 @@ export async function completeInterview(
       }
     }
 
+    // In-app notification for admins
+    await notifyAdmins(
+      'new_lead',
+      'New lead from interview',
+      `${lead.name} completed an interview`,
+      `/leads/${leadId}`
+    );
+
     return { success: true };
   } catch (err) {
     console.error('[Interview] Unexpected error in completeInterview:', err);
@@ -246,6 +255,14 @@ export async function submitFallbackForm(
         }
       }
     }
+
+    // In-app notification for admins
+    await notifyAdmins(
+      'new_lead',
+      'New lead from form',
+      `${parsed.data.name} submitted a form`,
+      `/leads/${lead.id}`
+    );
 
     return { success: true };
   } catch (err) {
