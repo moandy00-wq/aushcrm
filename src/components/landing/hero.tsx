@@ -53,7 +53,7 @@ export function Hero() {
         <ContainerAnimated animation="bottom">
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="#get-started"
+              href="/interview"
               className="rounded-full bg-[#141414] px-6 py-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#141414]/90 dark:bg-white dark:text-[#141414] dark:hover:bg-white/90"
             >
               Get Started Free

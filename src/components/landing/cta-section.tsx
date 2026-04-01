@@ -99,7 +99,7 @@ export function CtaSection() {
             {/* CTA buttons */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="#get-started"
+                href="/interview"
                 className="inline-flex items-center gap-2 rounded-full bg-[#141414] px-6 py-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#141414]/90 dark:bg-[#F5F5F5] dark:text-[#141414] dark:hover:bg-[#F5F5F5]/90"
               >
                 Get Started Free
