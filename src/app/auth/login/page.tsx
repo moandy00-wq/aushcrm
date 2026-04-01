@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,6 +83,40 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="mt-4 text-center">
+            {resetSent ? (
+              <p className="text-sm text-green-700">
+                Check your email for a password reset link.
+              </p>
+            ) : (
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={async () => {
+                  if (!email) {
+                    setError('Enter your email first, then click forgot password.');
+                    return;
+                  }
+                  setResetting(true);
+                  setError(null);
+                  const supabase = createClient();
+                  const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                  });
+                  setResetting(false);
+                  if (resetError) {
+                    setError(resetError.message);
+                  } else {
+                    setResetSent(true);
+                  }
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {resetting ? 'Sending...' : 'Forgot password?'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

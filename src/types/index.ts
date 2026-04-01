@@ -14,6 +14,13 @@ export type RequestDecision = 'approved' | 'denied';
 
 export type LeadEmailStatus = 'sent' | 'delivered' | 'bounced' | 'failed' | 'complained';
 
+export type NotificationType =
+  | 'new_lead'
+  | 'request_submitted'
+  | 'request_decided'
+  | 'lead_assigned'
+  | 'lead_status_changed';
+
 // ── Core Entities ──────────────────────────────────────
 
 export interface Profile {
@@ -43,6 +50,7 @@ export interface Lead {
   source: string | null;
   interview_transcript: ChatMessage[] | null;
   interview_data: InterviewData | null;
+  demo_date: string | null;
   status: LeadStatus;
   assigned_to: string | null;
   position: number;
@@ -101,6 +109,17 @@ export interface ActivityLogEntry {
   metadata: Record<string, unknown>;
   created_at: string;
   user?: Profile;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link: string;
+  read_at: string | null;
+  created_at: string;
 }
 
 export interface Invitation {
