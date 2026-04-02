@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLead, getLeadNotes, getLeadEmails, getDuplicateLeads } from '@/lib/queries/leads';
+import { getLead, getLeadNotes, getLeadEmails } from '@/lib/queries/leads';
 import { getLeadActivity } from '@/lib/queries/activity';
 import { getTeamMembers } from '@/lib/queries/team';
 import { LeadDetailHeader } from '@/components/dashboard/lead-detail-header';

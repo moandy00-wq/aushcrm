@@ -5,7 +5,6 @@ import { LeadOverview } from '@/components/dashboard/lead-overview';
 import { LeadNotes } from '@/components/dashboard/lead-notes';
 import { LeadEmails } from '@/components/dashboard/lead-emails';
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
-import { useUser } from '@/hooks/use-user';
 import type { Lead, LeadEmail, LeadNote, ActivityLogEntry } from '@/types';
 
 interface LeadDetailTabsProps {
@@ -21,9 +20,6 @@ export function LeadDetailTabs({
   activityEntries,
   initialEmails,
 }: LeadDetailTabsProps) {
-  const user = useUser();
-  const isAdminOrOwner = user.role === 'admin' || user.role === 'owner';
-
   return (
     <Tabs defaultValue="overview">
       <TabsList>
