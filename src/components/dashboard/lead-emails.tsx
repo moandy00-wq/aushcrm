@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/dialog';
 import { sendLeadEmail, generateEmailDraft } from '@/lib/actions/emails';
 import { toast } from '@/hooks/use-toast';
-import { Mail, Sparkles } from 'lucide-react';
+import { Mail, Sparkles, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import type { LeadEmail, LeadEmailStatus } from '@/types';
+
+type LeadEmailWithDirection = LeadEmail;
 
 interface LeadEmailsProps {
   leadId: string;
@@ -42,7 +44,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
-  const [emails, setEmails] = useState<LeadEmail[]>(initialEmails);
+  const [emails, setEmails] = useState<LeadEmailWithDirection[]>(initialEmails as LeadEmailWithDirection[]);
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -98,7 +100,7 @@ export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-500">
-          {emails.length} email{emails.length !== 1 ? 's' : ''} sent
+          {emails.length} email{emails.length !== 1 ? 's' : ''}
         </h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -175,29 +177,42 @@ export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
 
       {emails.length === 0 ? (
         <div className="py-8 text-center text-sm text-gray-400">
-          No emails sent yet
+          No emails yet
         </div>
       ) : (
         <div className="space-y-2">
           {emails.map((email) => {
             const badge = STATUS_BADGE[email.status];
+            const isInbound = email.direction === 'inbound';
             return (
               <div
                 key={email.id}
-                className="border border-gray-200 bg-white p-4"
+                className={`border bg-white p-4 ${isInbound ? 'border-l-2 border-l-blue-400 border-gray-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {email.subject}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-400">
-                      To: {email.to_email} &middot; {formatDate(email.created_at)}
+                    <div className="flex items-center gap-2">
+                      {isInbound ? (
+                        <ArrowDownLeft className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      ) : (
+                        <ArrowUpRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      )}
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {email.subject}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-400 ml-5">
+                      {isInbound
+                        ? `From: ${email.from_email ?? 'unknown'}`
+                        : `To: ${email.to_email}`}
+                      {' '}&middot; {formatDate(email.created_at)}
                     </p>
                   </div>
-                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                  <Badge variant={badge.variant}>
+                    {isInbound ? 'Received' : badge.label}
+                  </Badge>
                 </div>
-                <p className="mt-2 text-sm text-gray-600 whitespace-pre-wrap line-clamp-3">
+                <p className="mt-2 text-sm text-gray-600 whitespace-pre-wrap line-clamp-3 ml-5">
                   {email.body}
                 </p>
               </div>

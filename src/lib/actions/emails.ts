@@ -34,9 +34,13 @@ export async function sendLeadEmail(
       return { success: false, error: 'Lead not found' };
     }
 
-    // Send via Resend directly
+    // Send via Resend with Reply-To encoded with lead ID
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'AushCRM <noreply@aushcrm.com>';
+    const replyTo = `reply+${parsed.data.lead_id}@aushcrm.com`;
+
     const { data: emailResult, error: sendError } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'AushCRM <noreply@aush.com>',
+      from: fromEmail,
+      replyTo,
       to: lead.email,
       subject: parsed.data.subject,
       text: parsed.data.body,
@@ -58,6 +62,7 @@ export async function sendLeadEmail(
         body: parsed.data.body,
         resend_id: emailResult?.id ?? null,
         status: 'sent',
+        direction: 'outbound',
       })
       .select(
         '*, sender:profiles!sender_id(id, full_name, avatar_url, email, created_at, updated_at)'

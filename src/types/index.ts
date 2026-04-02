@@ -75,12 +75,14 @@ export interface LeadNote {
 export interface LeadEmail {
   id: string;
   lead_id: string;
-  sender_id: string;
+  sender_id: string | null;
   to_email: string;
+  from_email: string | null;
   subject: string;
   body: string;
   resend_id: string | null;
   status: LeadEmailStatus;
+  direction: 'outbound' | 'inbound';
   created_at: string;
   sender?: Profile;
 }
