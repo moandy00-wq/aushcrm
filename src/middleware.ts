@@ -23,6 +23,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // getUser() refreshes the token and validates the session
   const { data: { user } } = await supabase.auth.getUser();
 
   const isDashboardRoute =
@@ -40,13 +41,18 @@ export async function middleware(request: NextRequest) {
 
   // For authenticated users on dashboard routes, check for valid role
   if (user && isDashboardRoute) {
-    const session = (await supabase.auth.getSession()).data.session;
-    const userRole = session?.access_token
-      ? JSON.parse(atob(session.access_token.split('.')[1]))?.user_role
-      : null;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+        const userRole = payload?.user_role;
 
-    if (!userRole || userRole === 'null') {
-      return NextResponse.redirect(new URL('/auth/deactivated', request.url));
+        if (!userRole || userRole === 'null' || userRole === null) {
+          return NextResponse.redirect(new URL('/auth/deactivated', request.url));
+        }
+      }
+    } catch {
+      // If JWT parsing fails, let the request through — the layout will handle auth
     }
   }
 
