@@ -29,7 +29,7 @@ export function LeadDetailTabs({
       <TabsList>
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="notes">Notes</TabsTrigger>
-        {isAdminOrOwner && <TabsTrigger value="emails">Emails</TabsTrigger>}
+        <TabsTrigger value="emails">Emails</TabsTrigger>
         <TabsTrigger value="activity">Activity</TabsTrigger>
       </TabsList>
 
@@ -45,11 +45,9 @@ export function LeadDetailTabs({
         <LeadNotes leadId={lead.id} initialNotes={initialNotes} />
       </TabsContent>
 
-      {isAdminOrOwner && (
-        <TabsContent value="emails">
-          <LeadEmails leadId={lead.id} initialEmails={initialEmails} />
-        </TabsContent>
-      )}
+      <TabsContent value="emails">
+        <LeadEmails leadId={lead.id} initialEmails={initialEmails} />
+      </TabsContent>
 
       <TabsContent value="activity">
         <ActivityTimeline entries={activityEntries} />

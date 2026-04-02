@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getLead, getLeadNotes, getLeadEmails } from '@/lib/queries/leads';
+import { getLead, getLeadNotes, getLeadEmails, getDuplicateLeads } from '@/lib/queries/leads';
 import { getLeadActivity } from '@/lib/queries/activity';
 import { getTeamMembers } from '@/lib/queries/team';
 import { LeadDetailHeader } from '@/components/dashboard/lead-detail-header';
 import { LeadDetailTabs } from '@/components/dashboard/lead-detail-tabs';
+import { DuplicateWarning } from '@/components/dashboard/duplicate-warning';
 import { ArrowLeft } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
         Back to leads
       </Link>
 
+      <DuplicateWarning leadId={lead.id} email={lead.email} />
       <LeadDetailHeader lead={lead} teamMembers={teamMembers} />
 
       <LeadDetailTabs
