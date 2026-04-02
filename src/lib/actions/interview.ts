@@ -206,6 +206,23 @@ export async function submitFallbackForm(
 
     const supabase = createAdminClient();
 
+    const painPointsArray = parsed.data.pain_points
+      .split('\n')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+
+    const formInterviewData = {
+      business_name: parsed.data.business_name,
+      industry: parsed.data.industry,
+      business_model: '',
+      team_size: parsed.data.team_size,
+      pain_points: painPointsArray,
+      current_tools: parsed.data.current_tools || '',
+      goals: parsed.data.goals,
+      referral_source: parsed.data.referral_source || '',
+      additional_notes: '',
+    };
+
     const { data: lead, error } = await supabase
       .from('leads')
       .insert({
@@ -215,10 +232,7 @@ export async function submitFallbackForm(
         business_name: parsed.data.business_name,
         industry: parsed.data.industry,
         team_size: parsed.data.team_size,
-        pain_points: parsed.data.pain_points
-          .split('\n')
-          .map((s: string) => s.trim())
-          .filter(Boolean),
+        pain_points: painPointsArray,
         current_tools: parsed.data.current_tools || null,
         goals: parsed.data.goals,
         source: 'form',
@@ -226,6 +240,7 @@ export async function submitFallbackForm(
         status: 'new',
         position: 0,
         stage_entered_at: new Date().toISOString(),
+        interview_data: formInterviewData as unknown as Json,
       })
       .select('id')
       .single();
