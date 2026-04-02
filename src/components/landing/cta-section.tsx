@@ -106,7 +106,7 @@ export function CtaSection() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="#demo"
+                href="/interview"
                 className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] px-6 py-3 text-sm font-medium text-[#141414] transition-colors duration-150 hover:border-black/[0.16] dark:border-white/[0.08] dark:text-[#F5F5F5] dark:hover:border-white/[0.16]"
               >
                 Book a Demo
