@@ -92,14 +92,14 @@ export async function generateEmailDraft(
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Verify admin/owner role
+    // Verify authenticated (all roles can use AI draft)
     const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userData.user.id)
       .single();
 
-    if (!userRole || (userRole.role !== 'admin' && userRole.role !== 'owner')) {
+    if (!userRole) {
       return { success: false, error: 'Unauthorized' };
     }
 
