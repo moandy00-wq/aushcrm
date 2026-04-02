@@ -19,11 +19,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/dashboard/status-badge';
+import { Textarea } from '@/components/ui/textarea';
 import { updateLeadStatus, assignLead, softDeleteLead } from '@/lib/actions/leads';
+import { createStatusRequest } from '@/lib/actions/status-requests';
 import { useUser } from '@/hooks/use-user';
 import { toast } from '@/hooks/use-toast';
 import { PIPELINE_STAGES } from '@/lib/constants';
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertTriangle, GitPullRequest } from 'lucide-react';
 import type { Lead, UserWithRole } from '@/types';
 
 interface LeadDetailHeaderProps {
@@ -42,7 +44,11 @@ export function LeadDetailHeader({ lead, teamMembers }: LeadDetailHeaderProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestedStatus, setRequestedStatus] = useState('');
+  const [requestNote, setRequestNote] = useState('');
   const canManage = user.role === 'owner' || user.role === 'admin';
+  const isTeamMember = user.role === 'team_member';
   const daysInStage = getDaysInStage(lead.stage_entered_at);
 
   function handleStatusChange(status: string) {
@@ -112,6 +118,19 @@ export function LeadDetailHeader({ lead, teamMembers }: LeadDetailHeaderProps) {
               </span>
             </div>
           </div>
+
+          {isTeamMember && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setRequestOpen(true)}
+              >
+                <GitPullRequest className="h-4 w-4 mr-1" />
+                Request Status Change
+              </Button>
+            </div>
+          )}
 
           {canManage && (
             <div className="flex items-center gap-3">
@@ -193,6 +212,76 @@ export function LeadDetailHeader({ lead, teamMembers }: LeadDetailHeaderProps) {
               disabled={isPending}
             >
               {isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Status Change</DialogTitle>
+            <DialogDescription>
+              Request to change the status of {lead.name}. An admin will review your request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                New Status
+              </label>
+              <Select value={requestedStatus} onValueChange={setRequestedStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PIPELINE_STAGES.filter((s) => s.value !== lead.status).map((stage) => (
+                    <SelectItem key={stage.value} value={stage.value}>
+                      {stage.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Textarea
+                label="Reason"
+                value={requestNote}
+                onChange={(e) => setRequestNote(e.target.value)}
+                placeholder="Why should this status be changed?"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setRequestOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isPending || !requestedStatus || !requestNote}
+              onClick={() => {
+                startTransition(async () => {
+                  const result = await createStatusRequest({
+                    lead_id: lead.id,
+                    requested_status: requestedStatus,
+                    note: requestNote,
+                  });
+                  if (result.success) {
+                    toast('success', 'Status change request submitted');
+                    setRequestOpen(false);
+                    setRequestedStatus('');
+                    setRequestNote('');
+                  } else {
+                    toast('error', result.error ?? 'Failed to submit request');
+                  }
+                });
+              }}
+            >
+              {isPending ? 'Submitting...' : 'Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>

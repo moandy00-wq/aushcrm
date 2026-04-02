@@ -77,11 +77,16 @@ export async function inviteTeamMember(
 
     // Send invitation email
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/accept-invite?token=${token}`;
-    await sendEmail(
+    const emailResult = await sendEmail(
       email,
       'You\'re invited to AushCRM',
       TeamInvitationEmail({ role: ROLE_LABELS[role as AppRole], inviteUrl })
     );
+
+    if (!emailResult.success) {
+      console.error('[Team] Email send failed:', emailResult.error);
+      // Invitation was created in DB — don't fail the whole action, but warn
+    }
 
     revalidatePath('/team');
     return { success: true, data: { email } };

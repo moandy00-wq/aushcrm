@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { UserProvider } from '@/hooks/use-user';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { getUnreadCount, getRecentNotifications } from '@/lib/queries/notifications';
+import { getUnreadCount, getRecentNotifications, getUnreadCountsBySection } from '@/lib/queries/notifications';
 import type { AuthUser, AppRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -48,9 +48,10 @@ export default async function DashboardLayout({
   };
 
   // Fetch notifications
-  const [notificationCount, notifications] = await Promise.all([
+  const [notificationCount, notifications, sectionCounts] = await Promise.all([
     getUnreadCount(profile.id),
     getRecentNotifications(profile.id),
+    getUnreadCountsBySection(profile.id),
   ]);
 
   return (
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
         <DashboardShell
           notificationCount={notificationCount}
           notifications={notifications}
+          sectionCounts={sectionCounts}
         >
           {children}
         </DashboardShell>

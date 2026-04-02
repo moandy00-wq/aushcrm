@@ -137,6 +137,7 @@ export async function decideStatusRequest(
       .from('status_requests')
       .update({
         decision: parsed.data.decision,
+        decision_note: parsed.data.decision_note || null,
         decided_by: userData.user.id,
         decided_at: new Date().toISOString(),
       })

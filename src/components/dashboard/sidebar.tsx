@@ -16,6 +16,7 @@ import {
 import { NAV_ITEMS } from '@/lib/constants';
 import { useUser } from '@/hooks/use-user';
 import { createClient } from '@/lib/supabase/client';
+import { markSectionNotificationsRead } from '@/lib/actions/notifications';
 import { cn } from '@/lib/utils';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -30,9 +31,11 @@ const iconMap: Record<string, React.ElementType> = {
 export function Sidebar({
   open,
   onClose,
+  sectionCounts = {},
 }: {
   open: boolean;
   onClose: () => void;
+  sectionCounts?: Record<string, number>;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -86,11 +89,19 @@ export function Sidebar({
               const Icon = iconMap[item.icon];
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
 
+              const badgeCount = sectionCounts[item.href] || 0;
+
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    onClick={onClose}
+                    onClick={async () => {
+                      onClose();
+                      if (badgeCount > 0) {
+                        await markSectionNotificationsRead(item.href);
+                        router.refresh();
+                      }
+                    }}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors',
                       isActive
@@ -99,7 +110,12 @@ export function Sidebar({
                     )}
                   >
                     {Icon && <Icon className="h-4 w-4 shrink-0" />}
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {badgeCount > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center bg-red-600 px-1.5 text-[11px] font-semibold text-white rounded-full">
+                        {badgeCount > 99 ? '99+' : badgeCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

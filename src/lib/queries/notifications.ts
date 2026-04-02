@@ -38,3 +38,26 @@ export async function getRecentNotifications(
 
   return (data ?? []) as unknown as Notification[];
 }
+
+export async function getUnreadCountsBySection(
+  userId: string
+): Promise<Record<string, number>> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('link')
+    .eq('user_id', userId)
+    .is('read_at', null);
+
+  if (error || !data) return {};
+
+  const counts: Record<string, number> = {};
+  for (const row of data) {
+    const link = row.link as string;
+    // Map link to nav section: /leads/xxx -> /leads, /requests -> /requests, etc.
+    const section = '/' + (link.split('/')[1] || '');
+    counts[section] = (counts[section] || 0) + 1;
+  }
+  return counts;
+}

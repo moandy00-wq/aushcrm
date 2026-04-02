@@ -3,6 +3,7 @@ import type { InterviewData } from '@/types';
 interface LeadOverviewProps {
   interviewData: InterviewData | null;
   source: string | null;
+  aiSummary: string | null;
 }
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
@@ -16,7 +17,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
-export function LeadOverview({ interviewData, source }: LeadOverviewProps) {
+export function LeadOverview({ interviewData, source, aiSummary }: LeadOverviewProps) {
   if (!interviewData) {
     return (
       <div className="py-8 text-center text-sm text-gray-400">
@@ -26,6 +27,15 @@ export function LeadOverview({ interviewData, source }: LeadOverviewProps) {
   }
 
   return (
+    <div className="space-y-4">
+      {aiSummary && (
+        <div className="border-l-2 border-gray-900 bg-gray-50 p-4">
+          <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            AI Summary
+          </dt>
+          <dd className="text-sm text-gray-700 leading-relaxed">{aiSummary}</dd>
+        </div>
+      )}
     <div className="border border-gray-200 bg-white p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Field label="Business Name" value={interviewData.business_name} />
@@ -59,6 +69,7 @@ export function LeadOverview({ interviewData, source }: LeadOverviewProps) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

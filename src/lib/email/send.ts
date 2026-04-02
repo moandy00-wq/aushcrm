@@ -1,4 +1,5 @@
 import { resend } from './resend';
+import { render } from '@react-email/render';
 import type { ReactElement } from 'react';
 
 interface SendEmailResult {
@@ -13,11 +14,12 @@ export async function sendEmail(
   react: ReactElement
 ): Promise<SendEmailResult> {
   try {
+    const html = await render(react);
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'AushCRM <noreply@aush.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'AushCRM <onboarding@resend.dev>',
       to,
       subject,
-      react,
+      html,
     });
 
     if (error) {

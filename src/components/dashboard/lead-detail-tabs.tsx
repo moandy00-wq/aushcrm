@@ -37,6 +37,7 @@ export function LeadDetailTabs({
         <LeadOverview
           interviewData={lead.interview_data}
           source={lead.source}
+          aiSummary={lead.ai_summary}
         />
       </TabsContent>
 

@@ -84,6 +84,7 @@ export const createStatusRequestSchema = z.object({
 export const decideStatusRequestSchema = z.object({
   request_id: z.string().uuid(),
   decision: z.enum(['approved', 'denied']),
+  decision_note: z.string().max(2000).optional(),
 });
 
 // Invitations

@@ -10,14 +10,15 @@ interface DashboardShellProps {
   children: React.ReactNode;
   notificationCount?: number;
   notifications?: Notification[];
+  sectionCounts?: Record<string, number>;
 }
 
-export function DashboardShell({ children, notificationCount = 0, notifications = [] }: DashboardShellProps) {
+export function DashboardShell({ children, notificationCount = 0, notifications = [], sectionCounts = {} }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} sectionCounts={sectionCounts} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}

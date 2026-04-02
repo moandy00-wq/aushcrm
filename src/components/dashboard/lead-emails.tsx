@@ -13,9 +13,9 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { sendLeadEmail } from '@/lib/actions/emails';
+import { sendLeadEmail, generateEmailDraft } from '@/lib/actions/emails';
 import { toast } from '@/hooks/use-toast';
-import { Mail } from 'lucide-react';
+import { Mail, Sparkles } from 'lucide-react';
 import type { LeadEmail, LeadEmailStatus } from '@/types';
 
 interface LeadEmailsProps {
@@ -47,6 +47,9 @@ export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [showAiContext, setShowAiContext] = useState(false);
+  const [aiContext, setAiContext] = useState('');
+  const [isDrafting, setIsDrafting] = useState(false);
 
   function handleSend() {
     if (!subject.trim() || !body.trim()) return;
@@ -68,6 +71,29 @@ export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
     });
   }
 
+  async function handleDraftWithAi() {
+    setIsDrafting(true);
+    try {
+      const result = await generateEmailDraft(
+        leadId,
+        aiContext.trim() || undefined
+      );
+      if (result.success && result.data) {
+        setSubject(result.data.subject);
+        setBody(result.data.body);
+        setShowAiContext(false);
+        setAiContext('');
+        toast('success', 'Draft generated');
+      } else {
+        toast('error', result.error ?? 'Failed to generate draft');
+      }
+    } catch {
+      toast('error', 'Failed to generate draft');
+    } finally {
+      setIsDrafting(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -86,6 +112,36 @@ export function LeadEmails({ leadId, initialEmails }: LeadEmailsProps) {
               <DialogTitle>Compose Email</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowAiContext((v) => !v)}
+                  disabled={isDrafting}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Draft with AI
+                </Button>
+                {showAiContext && (
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Optional context (e.g. 'follow up about their demo', 're-engage after going cold')..."
+                      value={aiContext}
+                      onChange={(e) => setAiContext(e.target.value)}
+                      rows={2}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleDraftWithAi}
+                      disabled={isDrafting}
+                    >
+                      {isDrafting ? 'Generating...' : 'Generate Draft'}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Input
                 placeholder="Subject"
                 value={subject}

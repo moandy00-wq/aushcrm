@@ -1,7 +1,6 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { acceptInviteSchema } from '@/types/schemas';
 import type { ActionResult, Invitation } from '@/types';
 
@@ -13,7 +12,7 @@ export async function validateInviteToken(
       return { success: false, error: 'Token is required' };
     }
 
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminClient();
 
     const { data: invitation, error } = await supabase
       .from('invitations')

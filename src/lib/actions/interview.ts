@@ -8,6 +8,7 @@ import { LeadConfirmationEmail } from '@/lib/email/templates/lead-confirmation';
 import { NewLeadNotificationEmail } from '@/lib/email/templates/new-lead-notification';
 import { interviewGateSchema, fallbackFormSchema } from '@/types/schemas';
 import { extractInterviewData } from '@/lib/interview/extract';
+import { generateLeadSummary } from '@/lib/interview/summarize';
 import { notifyAdmins } from '@/lib/notifications/create';
 import type { ActionResult, ChatMessage, InterviewSession } from '@/types';
 import type { Json } from '@/types/database';
@@ -117,6 +118,23 @@ export async function completeInterview(
       return { success: false, error: 'Failed to save interview data.' };
     }
 
+    // Generate AI summary (non-blocking)
+    generateLeadSummary({
+      name: lead.name,
+      business_name: interviewData.business_name || null,
+      interview_data: interviewData as unknown as Record<string, unknown>,
+      interview_transcript: messages,
+    }).then(async (summary) => {
+      if (summary) {
+        await supabase
+          .from('leads')
+          .update({ ai_summary: summary })
+          .eq('id', leadId);
+      }
+    }).catch((err) => {
+      console.error('[Interview] Failed to generate AI summary:', err);
+    });
+
     // Send confirmation email to lead
     await sendEmail(
       lead.email,
@@ -216,6 +234,30 @@ export async function submitFallbackForm(
       console.error('[Form] Failed to create lead:', error);
       return { success: false, error: 'Failed to submit form. Please try again.' };
     }
+
+    // Generate AI summary (non-blocking)
+    generateLeadSummary({
+      name: parsed.data.name,
+      business_name: parsed.data.business_name || null,
+      interview_data: {
+        business_name: parsed.data.business_name,
+        industry: parsed.data.industry,
+        team_size: parsed.data.team_size,
+        pain_points: parsed.data.pain_points,
+        current_tools: parsed.data.current_tools || null,
+        goals: parsed.data.goals,
+      },
+      interview_transcript: null,
+    }).then(async (summary) => {
+      if (summary) {
+        await supabase
+          .from('leads')
+          .update({ ai_summary: summary })
+          .eq('id', lead.id);
+      }
+    }).catch((err) => {
+      console.error('[Form] Failed to generate AI summary:', err);
+    });
 
     // Send confirmation email
     await sendEmail(

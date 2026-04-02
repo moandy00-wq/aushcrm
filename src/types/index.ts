@@ -56,6 +56,7 @@ export interface Lead {
   position: number;
   stage_entered_at: string;
   is_complete: boolean;
+  ai_summary: string | null;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;

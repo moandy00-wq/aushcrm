@@ -73,6 +73,7 @@ export function NotificationBell({ initialCount, initialNotifications }: Notific
 
   const handleNotificationClick = useCallback(
     async (notif: Notification) => {
+      setOpen(false);
       if (!notif.read_at) {
         await markNotificationRead(notif.id);
         setNotifications((prev) =>
@@ -82,10 +83,10 @@ export function NotificationBell({ initialCount, initialNotifications }: Notific
         );
         setCount((prev) => Math.max(0, prev - 1));
       }
-      setOpen(false);
       if (notif.link) {
         router.push(notif.link);
       }
+      router.refresh();
     },
     [router]
   );
@@ -96,7 +97,8 @@ export function NotificationBell({ initialCount, initialNotifications }: Notific
       prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() }))
     );
     setCount(0);
-  }, []);
+    router.refresh();
+  }, [router]);
 
   return (
     <div className="relative" ref={dropdownRef}>
