@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createStatusRequestSchema, decideStatusRequestSchema } from '@/types/schemas';
 import { createNotification, notifyAdmins } from '@/lib/notifications/create';
+import { emailNotify } from '@/lib/notifications/email-notify';
 import type { ActionResult } from '@/types';
 
 export async function createStatusRequest(
@@ -44,13 +45,22 @@ export async function createStatusRequest(
       return { success: false, error: error.message };
     }
 
-    // Notify admins
+    // In-app notify admins
     await notifyAdmins(
       'request_submitted',
       'New Status Change Request',
       `Request to move "${lead.name}" from ${lead.status} to ${parsed.data.requested_status}`,
       '/requests'
     );
+
+    // Email admins/owner
+    await emailNotify({
+      subject: `Status change request: ${lead.name}`,
+      body: `A team member has requested to move "${lead.name}" from "${lead.status.replace(/_/g, ' ')}" to "${parsed.data.requested_status.replace(/_/g, ' ')}".`,
+      actionUrl: '/requests',
+      actionLabel: 'Review Request',
+      excludeUserId: userData.user.id,
+    });
 
     revalidatePath('/requests');
     return { success: true };
@@ -147,7 +157,7 @@ export async function decideStatusRequest(
       return { success: false, error: decisionError.message };
     }
 
-    // Notify requester
+    // In-app notify requester
     await createNotification(
       request.requester_id,
       'request_decided',
@@ -155,6 +165,16 @@ export async function decideStatusRequest(
       `Your request to move "${lead.name}" was ${parsed.data.decision}`,
       `/leads/${request.lead_id}`
     );
+
+    // Email requester + admins/owner
+    const noteText = parsed.data.decision_note ? `\n\nNote: "${parsed.data.decision_note}"` : '';
+    await emailNotify({
+      subject: `Status request ${parsed.data.decision}: ${lead.name}`,
+      body: `The request to move "${lead.name}" to "${request.requested_status.replace(/_/g, ' ')}" has been ${parsed.data.decision}.${noteText}`,
+      actionUrl: `/leads/${request.lead_id}`,
+      alsoNotifyUserId: request.requester_id,
+      excludeUserId: userData.user.id,
+    });
 
     revalidatePath('/requests');
     revalidatePath('/leads');

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { updateLeadStatusSchema, assignLeadSchema, moveLeadInPipelineSchema } from '@/types/schemas';
 import { createNotification } from '@/lib/notifications/create';
+import { emailNotify } from '@/lib/notifications/email-notify';
 import type { ActionResult } from '@/types';
 
 export async function updateLeadStatus(
@@ -40,7 +41,7 @@ export async function updateLeadStatus(
       return { success: false, error: error.message };
     }
 
-    // Notify assigned team member if any
+    // In-app notification for assigned team member
     if (lead?.assigned_to && lead.assigned_to !== userData.user.id) {
       await createNotification(
         lead.assigned_to,
@@ -50,6 +51,15 @@ export async function updateLeadStatus(
         `/leads/${parsed.data.lead_id}`
       );
     }
+
+    // Email notification — admins/owner get all, assigned team member gets theirs
+    await emailNotify({
+      subject: `Lead status changed: ${lead?.name ?? 'Unknown'}`,
+      body: `The lead "${lead?.name}" has been moved to "${parsed.data.status.replace(/_/g, ' ')}".`,
+      actionUrl: `/leads/${parsed.data.lead_id}`,
+      alsoNotifyUserId: lead?.assigned_to ?? undefined,
+      excludeUserId: userData.user.id,
+    });
 
     revalidatePath('/leads');
     revalidatePath('/pipeline');
@@ -90,7 +100,7 @@ export async function assignLead(
       return { success: false, error: error.message };
     }
 
-    // Notify assigned user
+    // In-app notification for assigned user
     if (parsed.data.assigned_to && parsed.data.assigned_to !== userData.user.id) {
       await createNotification(
         parsed.data.assigned_to,
@@ -99,6 +109,17 @@ export async function assignLead(
         `You have been assigned "${lead?.name ?? 'a lead'}"`,
         `/leads/${parsed.data.lead_id}`
       );
+    }
+
+    // Email notification — admins/owner get all, assigned team member gets theirs
+    if (parsed.data.assigned_to) {
+      await emailNotify({
+        subject: `Lead assigned: ${lead?.name ?? 'Unknown'}`,
+        body: `The lead "${lead?.name}" has been assigned to a team member.`,
+        actionUrl: `/leads/${parsed.data.lead_id}`,
+        alsoNotifyUserId: parsed.data.assigned_to,
+        excludeUserId: userData.user.id,
+      });
     }
 
     revalidatePath('/leads');
