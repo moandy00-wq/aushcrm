@@ -118,22 +118,23 @@ export async function completeInterview(
       return { success: false, error: 'Failed to save interview data.' };
     }
 
-    // Generate AI summary (non-blocking)
-    generateLeadSummary({
-      name: lead.name,
-      business_name: interviewData.business_name || null,
-      interview_data: interviewData as unknown as Record<string, unknown>,
-      interview_transcript: messages,
-    }).then(async (summary) => {
+    // Generate AI summary
+    try {
+      const summary = await generateLeadSummary({
+        name: lead.name,
+        business_name: interviewData.business_name || null,
+        interview_data: interviewData as unknown as Record<string, unknown>,
+        interview_transcript: messages,
+      });
       if (summary) {
         await supabase
           .from('leads')
           .update({ ai_summary: summary })
           .eq('id', leadId);
       }
-    }).catch((err) => {
+    } catch (err) {
       console.error('[Interview] Failed to generate AI summary:', err);
-    });
+    }
 
     // Send confirmation email to lead
     await sendEmail(
@@ -250,29 +251,30 @@ export async function submitFallbackForm(
       return { success: false, error: 'Failed to submit form. Please try again.' };
     }
 
-    // Generate AI summary (non-blocking)
-    generateLeadSummary({
-      name: parsed.data.name,
-      business_name: parsed.data.business_name || null,
-      interview_data: {
-        business_name: parsed.data.business_name,
-        industry: parsed.data.industry,
-        team_size: parsed.data.team_size,
-        pain_points: parsed.data.pain_points,
-        current_tools: parsed.data.current_tools || null,
-        goals: parsed.data.goals,
-      },
-      interview_transcript: null,
-    }).then(async (summary) => {
+    // Generate AI summary
+    try {
+      const summary = await generateLeadSummary({
+        name: parsed.data.name,
+        business_name: parsed.data.business_name || null,
+        interview_data: {
+          business_name: parsed.data.business_name,
+          industry: parsed.data.industry,
+          team_size: parsed.data.team_size,
+          pain_points: parsed.data.pain_points,
+          current_tools: parsed.data.current_tools || null,
+          goals: parsed.data.goals,
+        },
+        interview_transcript: null,
+      });
       if (summary) {
         await supabase
           .from('leads')
           .update({ ai_summary: summary })
           .eq('id', lead.id);
       }
-    }).catch((err) => {
+    } catch (err) {
       console.error('[Form] Failed to generate AI summary:', err);
-    });
+    }
 
     // Send confirmation email
     await sendEmail(
