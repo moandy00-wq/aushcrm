@@ -19,8 +19,11 @@ export async function POST(req: Request) {
     // Validate origin
     const origin = req.headers.get('origin');
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (appUrl && origin && origin !== appUrl) {
-      return new Response('Forbidden', { status: 403 });
+    if (appUrl && origin) {
+      const allowed = [appUrl, appUrl.replace('https://', 'https://www.')];
+      if (!allowed.includes(origin)) {
+        return new Response('Forbidden', { status: 403 });
+      }
     }
 
     if (!leadId || !nonce || !messages) {
